@@ -30,8 +30,8 @@ class User(db.Model):
 
     def __init__(self, nickname, name, pwd, token):
         self.nickname = nickname
-        self.name = name
-        self.pwd = pwd
+        self.username = name
+        self.password = pwd
         self.token = token
         self.id = None
 
