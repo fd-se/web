@@ -23,11 +23,13 @@ class User(db.Model):
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key=True)
+    nickname = db.Column(db.String(32))
     username = db.Column(db.String(32), unique=True, index=True)
     password = db.Column(db.String(128))
-    token = db.Column(db.String(128))
+    token = db.Column(db.String(128), index=True)
 
-    def __init__(self, name, pwd, token):
+    def __init__(self, nickname, name, pwd, token):
+        self.nickname = nickname
         self.name = name
         self.pwd = pwd
         self.token = token
@@ -61,7 +63,7 @@ def login():
             g.user = username
             return jsonify({
                 'success': True,
-                'content': None
+                'content': user.nickname
             })
         else:
             return jsonify({
@@ -74,12 +76,13 @@ def login():
 def login_token():
     g.user = None
     token = hashlib.md5(request.form['token']).hexdigest()
+    nickname = User.query.filter_by(token=token).first().nickname
     if redis.exists(token):
         g.user = redis.get(token)
         redis.expire(token, 2592000)
         return jsonify({
             'success': True,
-            'content': None
+            'content': nickname
         })
     return jsonify({
         'success': False,
@@ -90,6 +93,7 @@ def login_token():
 @app.route('/register', methods=['POST'])
 def register():
     g.user = None
+    nickname = request.form['nickname']
     username = request.form['username']
     password = hashlib.md5(request.form['password']).hexdigest()
     token = hashlib.md5(request.form['token']).hexdigest()
@@ -98,7 +102,7 @@ def register():
             'success': False,
             'content': 'Username Already Exists!'
         })
-    user = User(username, password, token)
+    user = User(nickname, username, password, token)
     db.session.add(user)
     db.session.commit()
     redis.set(token, username)
@@ -106,7 +110,7 @@ def register():
     g.user = username
     return jsonify({
         'success': True,
-        'content': None
+        'content': nickname
     })
 
 
