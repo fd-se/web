@@ -107,6 +107,8 @@ def register():
     db.session.commit()
     redis.set(token, username)
     redis.expire(token, 2592000)
+    print(nickname)
+    print(token)
     g.user = username
     return jsonify({
         'success': True,
