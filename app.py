@@ -97,7 +97,7 @@ def register():
     username = request.form['username']
     password = hashlib.md5(request.form['password']).hexdigest()
     token = hashlib.md5(request.form['token']).hexdigest()
-    if User.query.filter_by(username=username):
+    if User.query.filter_by(username=username).first():
         return jsonify({
             'success': False,
             'content': 'Username Already Exists!'
@@ -107,8 +107,6 @@ def register():
     db.session.commit()
     redis.set(token, username)
     redis.expire(token, 2592000)
-    print(nickname)
-    print(token)
     g.user = username
     return jsonify({
         'success': True,
