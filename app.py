@@ -97,7 +97,7 @@ def register():
     username = request.form['username']
     password = hashlib.md5(request.form['password']).hexdigest()
     token = hashlib.md5(request.form['token']).hexdigest()
-    if User.query.filter(username=username):
+    if User.query.filter_by(username=username):
         return jsonify({
             'success': False,
             'content': 'Username Already Exists!'
