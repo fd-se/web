@@ -27,14 +27,13 @@ class User(db.Model):
     nickname = db.Column(db.String(32))
     username = db.Column(db.String(32), unique=True, index=True)
     password = db.Column(db.String(128))
-    token = db.Column(db.String(128), index=True)
+    # token = db.Column(db.String(128), index=True)
     bitmap = db.Column(MEDIUMTEXT)
 
-    def __init__(self, nickname, name, pwd, token):
+    def __init__(self, nickname, name, pwd):
         self.nickname = nickname
         self.username = name
         self.password = pwd
-        self.token = token
         self.id = None
 
 
@@ -62,7 +61,7 @@ def login():
         })
     else:
         if user.password == password:
-            redis.delete(user.token)
+            # redis.delete(user.token)
             # redis.expire(user.token, 2592000)
             redis.set(token, user.username)
             redis.expire(token, 2592000)
@@ -84,8 +83,9 @@ def login():
 def login_token():
     g.user = None
     token = hashlib.md5(request.form['token']).hexdigest()
-    res = User.query.filter_by(token=token).first()
+    # res = User.query.filter_by(token=token).first()
     if redis.exists(token):
+        res = User.query.filter_by(username=redis.get(token)).first()
         g.user = redis.get(token)
         redis.expire(token, 2592000)
         return jsonify({
@@ -112,7 +112,7 @@ def register():
             'success': False,
             'content': 'Username Already Exists!'
         })
-    user = User(nickname, username, password, token)
+    user = User(nickname, username, password)
     db.session.add(user)
     db.session.commit()
     redis.set(token, username)
