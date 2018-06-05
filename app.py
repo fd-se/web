@@ -3,6 +3,7 @@
 from flask import Flask, jsonify, request, g
 from flask_httpauth import HTTPTokenAuth
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 
 import hashlib
 
@@ -22,11 +23,12 @@ class User(db.Model):
 
     __tablename__ = 'user'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nickname = db.Column(db.String(32))
     username = db.Column(db.String(32), unique=True, index=True)
     password = db.Column(db.String(128))
     token = db.Column(db.String(128), index=True)
+    bitmap = db.Column(MEDIUMTEXT)
 
     def __init__(self, nickname, name, pwd, token):
         self.nickname = nickname
@@ -50,25 +52,31 @@ def login():
     g.user = None
     username = request.form['username']
     password = hashlib.md5(request.form['password']).hexdigest()
+    token = hashlib.md5(request.form['token']).hexdigest()
     user = User.query.filter_by(username=username).first()
     if not user:
         return jsonify({
             'success': False,
-            'content': 'Unknown Username!'
+            'content': 'Unknown Username!',
+            'bitmap': None
         })
     else:
         if user.password == password:
-            redis.set(user.token, user.username)
-            redis.expire(user.token, 2592000)
+            redis.delete(user.token)
+            # redis.expire(user.token, 2592000)
+            redis.set(token, user.username)
+            redis.expire(token, 2592000)
             g.user = username
             return jsonify({
                 'success': True,
-                'content': user.nickname
+                'content': user.nickname,
+                'bitmap': user.bitmap
             })
         else:
             return jsonify({
                 'success': False,
-                'content': 'Wrong Password!'
+                'content': 'Wrong Password!',
+                'bitmap': None
             })
 
 
@@ -76,17 +84,19 @@ def login():
 def login_token():
     g.user = None
     token = hashlib.md5(request.form['token']).hexdigest()
-    nickname = User.query.filter_by(token=token).first().nickname
+    res = User.query.filter_by(token=token).first()
     if redis.exists(token):
         g.user = redis.get(token)
         redis.expire(token, 2592000)
         return jsonify({
             'success': True,
-            'content': nickname
+            'content': res.nickname,
+            'bitmap': res.bitmap
         })
     return jsonify({
         'success': False,
-        'content': None
+        'content': None,
+        'bitmap': None
     })
 
 
