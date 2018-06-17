@@ -89,7 +89,8 @@ def login_token():
     # res = User.query.filter_by(token=token).first()
     if redis0.exists(token):
         res = User.query.filter_by(username=redis0.get(token)).first()
-        print res
+        print res.username
+        print token
         g.user = redis0.get(token)
         redis0.expire(token, 2592000)
         return jsonify({
@@ -148,6 +149,7 @@ def change():
     token = request.form['token']
     password = request.form['password']
     username = redis0.get(token)
+    print token
     print username
     print bitmap
     print nickname
