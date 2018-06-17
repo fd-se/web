@@ -148,6 +148,7 @@ def change():
     token = request.form['token']
     password = request.form['password']
     username = redis0.get(token)
+    print username
     print bitmap
     print nickname
     print password
