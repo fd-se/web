@@ -130,7 +130,6 @@ def register():
 
 
 @app.route('/logout', methods=['POST'])
-@auth.login_required
 def logout():
     token = hashlib.md5(request.form['token']).hexdigest()
     redis1.delete(redis0.get(token))
@@ -142,7 +141,6 @@ def logout():
 
 
 @app.route('/change', methods=['POST'])
-@auth.login_required
 def change():
     nickname = request.form['nickname']
     bitmap = request.form['bitmap']
@@ -160,7 +158,6 @@ def change():
         return jsonify({
             'success': True
         })
-
 
 
 @app.route('/')
