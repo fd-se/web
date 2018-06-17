@@ -148,6 +148,9 @@ def change():
     token = request.form['token']
     password = request.form['password']
     username = redis0.get(token)
+    print bitmap
+    print nickname
+    print password
     if bitmap:
         User.query.filter_by(username=username).update({"bitmap": bitmap})
         db.session.commit()
