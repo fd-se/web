@@ -89,8 +89,6 @@ def login_token():
     # res = User.query.filter_by(token=token).first()
     if redis0.exists(token):
         res = User.query.filter_by(username=redis0.get(token)).first()
-        print res.username
-        print token
         g.user = redis0.get(token)
         redis0.expire(token, 2592000)
         return jsonify({
@@ -146,14 +144,9 @@ def logout():
 def change():
     nickname = request.form['nickname']
     bitmap = request.form['bitmap']
-    token = request.form['token']
-    password = request.form['password']
+    password = hashlib.md5(request.form['password']).hexdigest()
+    token = hashlib.md5(request.form['token']).hexdigest()
     username = redis0.get(token)
-    print token
-    print username
-    print bitmap
-    print nickname
-    print password
     if bitmap:
         User.query.filter_by(username=username).update({"bitmap": bitmap})
         db.session.commit()
