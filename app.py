@@ -8,7 +8,7 @@ from sqlalchemy.dialects.mysql import MEDIUMTEXT
 import hashlib
 
 from config import USER, PASSWORD, URL, PORT, DATABASE
-from ext import redis
+from ext import redis0, redis1
 
 app = Flask(__name__)
 auth = HTTPTokenAuth(scheme='Dangerousor')
@@ -40,8 +40,8 @@ class User(db.Model):
 @auth.verify_token
 def verify_token(token):
     g.user = None
-    if redis.exists(token):
-        g.user = redis.get(token)
+    if redis0.exists(token):
+        g.user = redis0.get(token)
         return True
     return False
 
@@ -63,8 +63,11 @@ def login():
         if user.password == password:
             # redis.delete(user.token)
             # redis.expire(user.token, 2592000)
-            redis.set(token, user.username)
-            redis.expire(token, 2592000)
+            redis0.delete(redis1.get(user.username))
+            redis0.set(token, user.username)
+            redis0.expire(token, 2592000)
+            redis1.set(user.username, token)
+            redis1.expire(user.username, 2592000)
             g.user = username
             return jsonify({
                 'success': True,
@@ -84,10 +87,10 @@ def login_token():
     g.user = None
     token = hashlib.md5(request.form['token']).hexdigest()
     # res = User.query.filter_by(token=token).first()
-    if redis.exists(token):
-        res = User.query.filter_by(username=redis.get(token)).first()
-        g.user = redis.get(token)
-        redis.expire(token, 2592000)
+    if redis0.exists(token):
+        res = User.query.filter_by(username=redis0.get(token)).first()
+        g.user = redis0.get(token)
+        redis0.expire(token, 2592000)
         return jsonify({
             'success': True,
             'content': res.nickname,
@@ -115,8 +118,10 @@ def register():
     user = User(nickname, username, password)
     db.session.add(user)
     db.session.commit()
-    redis.set(token, username)
-    redis.expire(token, 2592000)
+    redis0.set(token, username)
+    redis0.expire(token, 2592000)
+    redis1.set(username, token)
+    redis1.expire(username, 2592000)
     g.user = username
     return jsonify({
         'success': True,
@@ -125,13 +130,37 @@ def register():
 
 
 @app.route('/logout', methods=['POST'])
+@auth.login_required
 def logout():
     token = hashlib.md5(request.form['token']).hexdigest()
-    redis.delete(token)
+    redis1.delete(redis0.get(token))
+    redis0.delete(token)
     g.user = None
     return jsonify({
         'success': True
     })
+
+
+@app.route('/change', methods=['POST'])
+@auth.login_required
+def change():
+    nickname = request.form['nickname']
+    bitmap = request.form['bitmap']
+    token = request.form['token']
+    username = redis0.get(token)
+    if bitmap:
+        User.query.filter_by(username=username).update({"bitmap": bitmap})
+        db.session.commit()
+        return jsonify({
+            'success': True
+        })
+    if nickname:
+        User.query.filter_by(username=username).update({'nickname': nickname})
+        db.session.commit()
+        return jsonify({
+            'success': True
+        })
+
 
 
 @app.route('/')
