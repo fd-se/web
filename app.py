@@ -3,7 +3,7 @@
 from flask import Flask, jsonify, request, g
 from flask_httpauth import HTTPTokenAuth
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.mysql import MEDIUMTEXT
+from sqlalchemy.dialects.mysql import LONGTEXT
 
 import hashlib
 
@@ -28,7 +28,7 @@ class User(db.Model):
     username = db.Column(db.String(32), unique=True, index=True)
     password = db.Column(db.String(128))
     # token = db.Column(db.String(128), index=True)
-    bitmap = db.Column(MEDIUMTEXT)
+    bitmap = db.Column(LONGTEXT)
 
     def __init__(self, nickname, name, pwd):
         self.nickname = nickname
