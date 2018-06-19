@@ -3,6 +3,7 @@
 import os
 import time
 import sys
+from io import BytesIO
 
 from flask import Flask, jsonify, request, send_from_directory, Response
 from flask_sqlalchemy import SQLAlchemy
@@ -275,9 +276,15 @@ def videodetail(filename):
 @app.route('/video/<filename>', methods=['GET'])
 def video(filename):
     dic = os.getcwd() + '/user/'
-    with open(dic+filename, 'rb+') as f:
-        return f.read()
-    # return Response(file(dic+filename), mimetype="application/octet-stream", status=200)
+
+    def generate():
+        with open(dic+filename, 'rb') as f:
+            data = f.read(1024)
+            while data:
+                yield data
+                data = f.read(1024)
+
+    return Response(generate(), mimetype="application/octet-stream")
 
 
 @app.route('/')
