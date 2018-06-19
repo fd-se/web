@@ -275,7 +275,7 @@ def videodetail(filename):
 
 @app.route('/video/<filename>', methods=['GET'])
 def video(filename):
-    dic = os.getcwd() + '/user/'
+    dic = os.getcwd() + '/users/'
 
     def generate():
         with open(dic+filename, 'rb') as f:
