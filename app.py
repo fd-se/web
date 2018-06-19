@@ -219,7 +219,8 @@ def upload():
                 temp = file_.filename.split('+title+')
                 print temp[0]
                 title = urllib.unquote(temp[0])
-                print title
+                print title.decode('utf-8')
+                print title.encode('utf-8')
                 temp = temp[1].split('+location+')
                 location = urllib.unquote(temp[0])
                 print location
