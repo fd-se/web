@@ -14,11 +14,14 @@ import hashlib
 from config import USER, PASSWORD, URL, PORT, DATABASE, UPLOAD_PATH
 from ext import redis0, redis1, redis2
 
+basedir = os.path.abspath(os.path.dirname(__file__))
+
 app = Flask(__name__)
 auth = HTTPTokenAuth(scheme='Dangerousor')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://{}:{}@{}:{}/{}'.format(USER, PASSWORD, URL, PORT, DATABASE)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+app.config['UPLOAD_FOLDER'] = UPLOAD_PATH
 
 db = SQLAlchemy(app)
 
@@ -194,6 +197,10 @@ def upload():
             return jsonify({'success': False, 'content': 'No selected file'})
         else:
             try:
+                file_dir = os.path.join(basedir, app.config['UPLOAD_FOLDER'])
+                if not os.path.exists(file_dir):
+                    os.makedirs(file_dir)
+                print file_.filename
                 temp = file_.filename.split('+location+')
                 location = temp[0]
                 temp = temp[1].split('+token+')
@@ -202,7 +209,7 @@ def upload():
                 # filename = secure_filename(file.filename)
                 # filename = origin_file_name
                 now_time = time.strftime('%Y-%m-%d %X', time.localtime())
-                save_path = os.path.join(UPLOAD_PATH, hashlib.md5(file_.filename.split('.')[0]).hexdigest() + file_.filename.split('.')[1])
+                save_path = os.path.join(file_dir, hashlib.md5(file_.filename.split('.')[0]).hexdigest() + file_.filename.split('.')[1])
                 print save_path
 
                 file_.save(save_path)
