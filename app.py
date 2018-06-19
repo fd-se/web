@@ -4,15 +4,14 @@ import os
 import time
 import sys
 
-from flask import Flask, jsonify, request, g, send_from_directory
-from flask_httpauth import HTTPTokenAuth
+from flask import Flask, jsonify, request, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import TEXT, DATETIME
 from sqlalchemy.dialects.mysql import LONGTEXT
 
 import hashlib
 
-from config import USER, PASSWORD, URL, PORT, DATABASE, UPLOAD_PATH
+from config import USER, PASSWORD, URL, PORT, DATABASE
 from ext import redis0, redis2
 
 default_encoding = 'utf-8'
@@ -21,7 +20,6 @@ if sys.getdefaultencoding() != default_encoding:
     sys.setdefaultencoding(default_encoding)
 
 app = Flask(__name__)
-auth = HTTPTokenAuth(scheme='Dangerousor')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://{}:{}@{}:{}/{}'.format(USER, PASSWORD, URL, PORT, DATABASE)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
@@ -67,18 +65,18 @@ class Video(db.Model):
         self.time = time_
 
 
-@auth.verify_token
-def verify_token(token):
-    g.user = None
-    if redis0.exists(token):
-        g.user = redis0.get(token)
-        return True
-    return False
+# @auth.verify_token
+# def verify_token(token):
+#     g.user = None
+#     if redis0.exists(token):
+#         g.user = redis0.get(token)
+#         return True
+#     return False
 
 
 @app.route('/login', methods=['POST'])
 def login():
-    g.user = None
+    # g.user = None
     username = request.form['username']
     password = hashlib.md5(request.form['password']).hexdigest()
     token = hashlib.md5(request.form['token']).hexdigest()
@@ -95,7 +93,7 @@ def login():
             # redis.expire(user.token, 2592000)
             redis0.set(token, user.username)
             redis0.expire(token, 2592000)
-            g.user = username
+            # g.user = username
             return jsonify({
                 'success': True,
                 'content': user.nickname,
@@ -111,12 +109,12 @@ def login():
 
 @app.route('/login_token', methods=['POST'])
 def login_token():
-    g.user = None
+    # g.user = None
     token = hashlib.md5(request.form['token']).hexdigest()
     # res = User.query.filter_by(token=token).first()
     if redis0.exists(token):
         res = User.query.filter_by(username=redis0.get(token)).first()
-        g.user = redis0.get(token)
+        # g.user = redis0.get(token)
         redis0.expire(token, 2592000)
         return jsonify({
             'success': True,
@@ -132,7 +130,7 @@ def login_token():
 
 @app.route('/register', methods=['POST'])
 def register():
-    g.user = None
+    # g.user = None
     nickname = request.form['nickname']
     username = request.form['username']
     password = hashlib.md5(request.form['password']).hexdigest()
@@ -147,7 +145,7 @@ def register():
     db.session.commit()
     redis0.set(token, username)
     redis0.expire(token, 2592000)
-    g.user = username
+    # g.user = username
     return jsonify({
         'success': True,
         'content': nickname
@@ -158,7 +156,7 @@ def register():
 def logout():
     token = hashlib.md5(request.form['token']).hexdigest()
     redis0.delete(token)
-    g.user = None
+    # g.user = None
     return jsonify({
         'success': True
     })
@@ -220,8 +218,8 @@ def upload():
 
                 file_.save(save_path)
                 username = redis0.get(token)
-                video = Video(username, h_path, title, location, now_time)
-                db.session.add(video)
+                video_ = Video(username, h_path, title, location, now_time)
+                db.session.add(video_)
                 db.session.commit()
                 return jsonify({'success': True, 'content': ''})
             except Exception as e:
@@ -242,33 +240,35 @@ def videoname(mtoken):
     if redis2.exists(username):
         num = redis2.get(username)
         redis2.incr(username)
+        print redis2.get(username)
         redis2.expire(username, 2592000)
-        video = Video.query.filter_by(id=num).first()
-        if not video:
+        video_ = Video.query.filter_by(id=num).first()
+        if not video_:
             redis2.set(username, 2)
-            video = Video.query.filter_by(id=1).first()
+            video_ = Video.query.filter_by(id=1).first()
+        print video_.video
         return jsonify({
-            'content': video.video,
+            'content': video_.video,
             'success': True
         })
     redis2.set(username, 2)
     redis2.expire(username, 2592000)
-    video = Video.query.filter_by(id=1).first()
+    video_ = Video.query.filter_by(id=1).first()
     return jsonify({
-        'content': video.video,
+        'content': video_.video,
         'success': True
     })
 
 
 @app.route('/videodetail/<filename>', methods=['GET'])
 def videodetail(filename):
-    video = Video.query.filter_by(video=filename).first()
+    video_ = Video.query.filter_by(video=filename).first()
     user = User.query.filter_by(username=video.username).first()
     return jsonify({
         'pic': user.bitmap,
         'author': user.nickname,
-        'title': video.title,
-        'place': video.location
+        'title': video_.title,
+        'place': video_.location
     })
 
 
