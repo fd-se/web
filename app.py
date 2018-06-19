@@ -3,6 +3,7 @@
 import os
 import time
 import urllib
+import sys
 
 from flask import Flask, jsonify, request, g
 from flask_httpauth import HTTPTokenAuth
@@ -14,6 +15,11 @@ import hashlib
 
 from config import USER, PASSWORD, URL, PORT, DATABASE, UPLOAD_PATH
 from ext import redis0, redis1, redis2
+
+default_encoding = 'utf-8'
+if sys.getdefaultencoding() != default_encoding:
+    reload(sys)
+    sys.setdefaultencoding(default_encoding)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -133,8 +139,8 @@ def login_token():
 @app.route('/register', methods=['POST'])
 def register():
     g.user = None
-    nickname = urllib.unquote(request.form['nickname']).decode('utf-8')
-    username = urllib.unquote(request.form['username']).decode('utf-8')
+    nickname = urllib.unquote(request.form['nickname'])
+    username = urllib.unquote(request.form['username'])
     password = hashlib.md5(request.form['password']).hexdigest()
     token = hashlib.md5(request.form['token']).hexdigest()
     if User.query.filter_by(username=username).first():
@@ -169,7 +175,7 @@ def logout():
 
 @app.route('/change', methods=['POST'])
 def change():
-    nickname = urllib.unquote(request.form['nickname']).decode('utf-8')
+    nickname = urllib.unquote(request.form['nickname'])
     bitmap = request.form['bitmap']
     password = hashlib.md5(request.form['password']).hexdigest()
     token = hashlib.md5(request.form['token']).hexdigest()
@@ -212,16 +218,14 @@ def upload():
                 print file_.filename
                 temp = file_.filename.split('+title+')
                 print temp[0]
-                print urllib.unquote(temp[0]).encode('utf-8').decode('utf-8')
-                print urllib.unquote(temp[0]).decode('utf-8')
-                title = urllib.unquote(temp[0]).decode('utf-8')
+                title = urllib.unquote(temp[0])
                 print title
                 temp = temp[1].split('+location+')
-                location = urllib.unquote(temp[0]).decode('utf-8')
+                location = urllib.unquote(temp[0])
                 print location
                 temp = temp[1].split('+token+')
                 token = hashlib.md5(temp[0]).hexdigest()
-                filename = urllib.unquote(temp[1]).decode('utf-8')
+                filename = urllib.unquote(temp[1])
                 print filename
                 # filename = secure_filename(file.filename)
                 # filename = origin_file_name
