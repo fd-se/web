@@ -2,7 +2,6 @@
 # -*- coding:utf-8 -*-
 import os
 import time
-import urllib
 import sys
 
 from flask import Flask, jsonify, request, g
@@ -139,8 +138,8 @@ def login_token():
 @app.route('/register', methods=['POST'])
 def register():
     g.user = None
-    nickname = urllib.unquote(request.form['nickname'])
-    username = urllib.unquote(request.form['username'])
+    nickname = request.form['nickname']
+    username = request.form['username']
     password = hashlib.md5(request.form['password']).hexdigest()
     token = hashlib.md5(request.form['token']).hexdigest()
     if User.query.filter_by(username=username).first():
@@ -175,7 +174,7 @@ def logout():
 
 @app.route('/change', methods=['POST'])
 def change():
-    nickname = urllib.unquote(request.form['nickname'])
+    nickname = request.form['nickname']
     bitmap = request.form['bitmap']
     password = hashlib.md5(request.form['password']).hexdigest()
     token = hashlib.md5(request.form['token']).hexdigest()
@@ -215,27 +214,20 @@ def upload():
                 file_dir = os.path.join(basedir, app.config['UPLOAD_FOLDER'])
                 if not os.path.exists(file_dir):
                     os.makedirs(file_dir)
-                print file_.filename
                 temp = file_.filename.split('+title+')
-                print temp[0]
-                title = urllib.unquote(temp[0]).decode('utf-8')
-                print title
+                title = temp[0]
                 temp = temp[1].split('+location+')
-                location = urllib.unquote(temp[0]).encode('utf-8')
-                print location
+                location = temp[0]
                 temp = temp[1].split('+token+')
                 token = hashlib.md5(temp[0]).hexdigest()
-                filename = urllib.unquote(temp[1])
-                print filename
                 # filename = secure_filename(file.filename)
                 # filename = origin_file_name
                 now_time = time.strftime('%Y-%m-%d %X', time.localtime())
                 save_path = os.path.join(file_dir, hashlib.md5(file_.filename.split('.')[0]).hexdigest() + '.' + file_.filename.split('.')[1])
-                print save_path
 
                 file_.save(save_path)
                 username = redis0.get(token)
-                video = Video(username, filename, title, location, now_time)
+                video = Video(username, save_path, title, location, now_time)
                 db.session.add(video)
                 db.session.commit()
                 redis2.rpush('video', save_path)
