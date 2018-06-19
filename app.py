@@ -219,7 +219,7 @@ def upload():
                 # filename = secure_filename(file.filename)
                 # filename = origin_file_name
                 now_time = time.strftime('%Y-%m-%d %X', time.localtime())
-                save_path = os.path.join(file_dir, hashlib.md5(file_.filename.split('.')[0]).hexdigest() + file_.filename.split('.')[1])
+                save_path = os.path.join(file_dir, hashlib.md5(file_.filename.split('.')[0]).hexdigest() + '.' + file_.filename.split('.')[1])
                 print save_path
 
                 file_.save(save_path)
