@@ -213,7 +213,6 @@ def upload():
                 temp = file_.filename.split('+title+')
                 print temp[0]
                 print urllib.unquote(temp[0]).encode('utf-8')
-                print urllib.unquote(temp[0]).encode('gbk')
                 print urllib.unquote(temp[0]).decode('gbk')
                 print urllib.unquote(temp[0]).encode('gbk').decode('utf-8')
                 print urllib.unquote(temp[0]).decode('utf-8')
