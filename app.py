@@ -57,9 +57,9 @@ class Video(db.Model):
     location = db.Column(TEXT)
     time = db.Column(DATETIME)
 
-    def __init__(self, username, video, title, location, time_):
+    def __init__(self, username, video_, title, location, time_):
         self.username = username
-        self.video = video
+        self.video = video_
         self.title = title
         self.location = location
         self.time = time_
@@ -263,7 +263,7 @@ def videoname(mtoken):
 @app.route('/videodetail/<filename>', methods=['GET'])
 def videodetail(filename):
     video_ = Video.query.filter_by(video=filename).first()
-    user = User.query.filter_by(username=video.username).first()
+    user = User.query.filter_by(username=video_.username).first()
     return jsonify({
         'pic': user.bitmap,
         'author': user.nickname,
