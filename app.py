@@ -1,14 +1,18 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
+import os
+import time
+
 from flask import Flask, jsonify, request, g
 from flask_httpauth import HTTPTokenAuth
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import TEXT, DATETIME
 from sqlalchemy.dialects.mysql import LONGTEXT
 
 import hashlib
 
-from config import USER, PASSWORD, URL, PORT, DATABASE
-from ext import redis0, redis1
+from config import USER, PASSWORD, URL, PORT, DATABASE, UPLOAD_PATH
+from ext import redis0, redis1, redis2
 
 app = Flask(__name__)
 auth = HTTPTokenAuth(scheme='Dangerousor')
@@ -35,6 +39,17 @@ class User(db.Model):
         self.username = name
         self.password = pwd
         self.id = None
+
+
+class Video(db.Model):
+
+    __tablename__ = 'video'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(32))
+    video = db.Column(TEXT)
+    location = db.Column(TEXT)
+    time = db.Column(DATETIME)
 
 
 @auth.verify_token
@@ -165,6 +180,42 @@ def change():
         return jsonify({
             'success': True
         })
+
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'content': 'No file part'})
+        file_ = request.files['file']
+        # if user does not select file, browser also submit a empty part without filename
+        if file_.filename == '':
+            return jsonify({'success': False, 'content': 'No selected file'})
+        else:
+            try:
+                temp = file_.filename.split('+location+')
+                location = temp[0]
+                temp = temp[1].split('+token+')
+                token = hashlib.md5(temp[0]).hexdigest()
+                filename = temp[1]
+                # filename = secure_filename(file.filename)
+                # filename = origin_file_name
+                now_time = time.strftime('%Y-%m-%d %X', time.localtime())
+                save_path = os.path.join(UPLOAD_PATH, hashlib.md5(file_.filename.split('.')[0]).hexdigest() + file_.filename.split('.')[1])
+                print save_path
+
+                file_.save(save_path)
+                username = redis0.get(token)
+                video = Video(username, filename, location, now_time)
+                db.session.add(video)
+                db.session.commit()
+                redis2.rpush('video', save_path)
+                return jsonify({'success': True, 'content': ''})
+            except Exception as e:
+                return jsonify({'success': False, 'content': 'Error occurred'})
+    else:
+        return jsonify({'success': False, 'content': 'Method not allowed'})
 
 
 @app.route('/')
