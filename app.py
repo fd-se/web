@@ -275,7 +275,9 @@ def videodetail(filename):
 @app.route('/video/<filename>', methods=['GET'])
 def video(filename):
     dic = os.getcwd() + '/user/'
-    return Response(file(dic+filename), mimetype="application/octet-stream", status=200)
+    with open(dic+filename, 'rb+') as f:
+        return f.read()
+    # return Response(file(dic+filename), mimetype="application/octet-stream", status=200)
 
 
 @app.route('/')
