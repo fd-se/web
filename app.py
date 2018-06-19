@@ -4,7 +4,7 @@ import os
 import time
 import sys
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, Response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import TEXT, DATETIME
 from sqlalchemy.dialects.mysql import LONGTEXT
@@ -275,7 +275,7 @@ def videodetail(filename):
 @app.route('/video/<filename>', methods=['GET'])
 def video(filename):
     dic = os.getcwd() + '/user/'
-    return send_from_directory(dic, filename, as_attachment=True)
+    return Response(file(dic+filename), mimetype="application/octet-stream", status=200)
 
 
 @app.route('/')
