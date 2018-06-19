@@ -212,8 +212,10 @@ def upload():
                 print file_.filename
                 temp = file_.filename.split('+title+')
                 title = urllib.unquote(temp[0]).decode('utf-8')
+                print title
                 temp = temp[1].split('+location+')
                 location = urllib.unquote(temp[0]).decode('utf-8')
+                print location
                 temp = temp[1].split('+token+')
                 token = hashlib.md5(temp[0]).hexdigest()
                 filename = urllib.unquote(temp[1]).decode('utf-8')
