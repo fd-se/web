@@ -239,9 +239,10 @@ def videoname(mtoken):
         })
     token = hashlib.md5(mtoken).hexdigest()
     username = redis0.get(token)
-    if redis2.exist(username):
+    if redis2.exists(username):
         num = redis2.get(username)
         redis2.incr(username)
+        redis2.expire(username, 2592000)
         video = Video.query.filter_by(id=num).first()
         if not video:
             redis2.set(username, 2)
@@ -251,8 +252,8 @@ def videoname(mtoken):
             'success': True
         })
     redis2.set(username, 2)
+    redis2.expire(username, 2592000)
     video = Video.query.filter_by(id=1).first()
-    print video.video
     return jsonify({
         'content': video.video,
         'success': True
