@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 import os
 import time
+import urllib
 
 from flask import Flask, jsonify, request, g
 from flask_httpauth import HTTPTokenAuth
@@ -132,8 +133,8 @@ def login_token():
 @app.route('/register', methods=['POST'])
 def register():
     g.user = None
-    nickname = request.form['nickname']
-    username = request.form['username']
+    nickname = urllib.unquote(request.form['nickname']).decode('gbk').encode('utf-8')
+    username = urllib.unquote(request.form['username']).decode('gbk').encode('utf-8')
     password = hashlib.md5(request.form['password']).hexdigest()
     token = hashlib.md5(request.form['token']).hexdigest()
     if User.query.filter_by(username=username).first():
@@ -168,7 +169,7 @@ def logout():
 
 @app.route('/change', methods=['POST'])
 def change():
-    nickname = request.form['nickname']
+    nickname = urllib.unquote(request.form['nickname']).decode('gbk').encode('utf-8')
     bitmap = request.form['bitmap']
     password = hashlib.md5(request.form['password']).hexdigest()
     token = hashlib.md5(request.form['token']).hexdigest()
@@ -210,12 +211,13 @@ def upload():
                     os.makedirs(file_dir)
                 print file_.filename
                 temp = file_.filename.split('+title+')
-                title = temp[0]
+                title = urllib.unquote(temp[0]).decode('gbk').encode('utf-8')
                 temp = temp[1].split('+location+')
-                location = temp[0]
+                location = urllib.unquote(temp[0]).decode('gbk').encode('utf-8')
                 temp = temp[1].split('+token+')
                 token = hashlib.md5(temp[0]).hexdigest()
-                filename = temp[1]
+                filename = urllib.unquote(temp[1]).decode('gbk').encode('utf-8')
+                print filename
                 # filename = secure_filename(file.filename)
                 # filename = origin_file_name
                 now_time = time.strftime('%Y-%m-%d %X', time.localtime())
