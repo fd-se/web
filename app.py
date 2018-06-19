@@ -252,6 +252,7 @@ def videoname(mtoken):
         })
     redis2.set(username, 2)
     video = Video.query.filter_by(id=1).first()
+    print video.video
     return jsonify({
         'content': video.video,
         'success': True
