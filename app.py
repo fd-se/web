@@ -51,8 +51,16 @@ class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(32))
     video = db.Column(TEXT)
+    title = db.Column(TEXT)
     location = db.Column(TEXT)
     time = db.Column(DATETIME)
+
+    def __init__(self, username, video, title, location, time_):
+        self.username = username
+        self.video = video
+        self.title = title
+        self.location = location
+        self.time = time_
 
 
 @auth.verify_token
@@ -201,7 +209,9 @@ def upload():
                 if not os.path.exists(file_dir):
                     os.makedirs(file_dir)
                 print file_.filename
-                temp = file_.filename.split('+location+')
+                temp = file_.filename.split('+title+')
+                title = temp[0]
+                temp = temp[1].split('+location+')
                 location = temp[0]
                 temp = temp[1].split('+token+')
                 token = hashlib.md5(temp[0]).hexdigest()
@@ -214,10 +224,11 @@ def upload():
 
                 file_.save(save_path)
                 username = redis0.get(token)
-                video = Video(username, filename, location, now_time)
+                video = Video(username, filename, title, location, now_time)
                 db.session.add(video)
                 db.session.commit()
                 redis2.rpush('video', save_path)
+                print redis2.llen('video')
                 return jsonify({'success': True, 'content': ''})
             except Exception as e:
                 return jsonify({'success': False, 'content': 'Error occurred'})
