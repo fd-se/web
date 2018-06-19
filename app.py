@@ -232,12 +232,20 @@ def upload():
 
 @app.route('/videoname/<mtoken>', methods=['GET'])
 def videoname(mtoken):
+    if not Video.query.filter_by(id=1).first():
+        return jsonify({
+            'content': None,
+            'success': False
+        })
     token = hashlib.md5(mtoken).hexdigest()
     username = redis0.get(token)
     if redis2.exist(username):
         num = redis2.get(username)
         redis2.incr(username)
         video = Video.query.filter_by(id=num).first()
+        if not video:
+            redis2.set(username, 2)
+            video = Video.query.filter_by(id=1).first()
         return jsonify({
             'content': video.video,
             'success': True
