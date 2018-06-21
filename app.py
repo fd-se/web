@@ -45,6 +45,7 @@ class User(db.Model):
         self.username = name
         self.password = pwd
         self.id = None
+        self.bitmap = None
 
 
 class Video(db.Model):
