@@ -210,7 +210,7 @@ def upload():
                     os.makedirs(file_dir)
                 temp = file_.filename.split('+title+')
                 title = temp[0]
-                temp = file_.filename.split('+topic+')
+                temp = temp[1].split('+topic+')
                 topic = temp[0]
                 temp = temp[1].split('+location+')
                 location = temp[0]
