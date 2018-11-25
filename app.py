@@ -56,13 +56,15 @@ class Video(db.Model):
     username = db.Column(db.String(32))
     video = db.Column(db.String(256), unique=True, index=True)
     title = db.Column(TEXT)
+    topic = db.Column(db.String(128))
     location = db.Column(TEXT)
     time = db.Column(DATETIME)
 
-    def __init__(self, username, video_, title, location, time_):
+    def __init__(self, username, video_, title, topic, location, time_):
         self.username = username
         self.video = video_
         self.title = title
+        self.topic = topic
         self.location = location
         self.time = time_
 
@@ -208,6 +210,8 @@ def upload():
                     os.makedirs(file_dir)
                 temp = file_.filename.split('+title+')
                 title = temp[0]
+                temp = file_.filename.split('+topic+')
+                topic = temp[0]
                 temp = temp[1].split('+location+')
                 location = temp[0]
                 temp = temp[1].split('+token+')
@@ -220,7 +224,7 @@ def upload():
 
                 file_.save(save_path)
                 username = redis0.get(token)
-                video_ = Video(username, h_path, title, location, now_time)
+                video_ = Video(username, h_path, title, topic, location, now_time)
                 db.session.add(video_)
                 db.session.commit()
                 return jsonify({'success': True, 'content': ''})
@@ -270,6 +274,7 @@ def videodetail(filename):
         'pic': user.bitmap,
         'author': user.nickname,
         'title': video_.title,
+        'topic': video_.topic,
         'place': video_.location
     })
 
